@@ -31,7 +31,37 @@ user_schema = UserSchema()
 multiple_user_schema = UserSchema(many=True)
 
 
+@app.route("/user/add", methods=["POST"])
+def add_user():
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
 
+    post_data = request.get_json()
+    username = post_data.get("username")
+    password = post_data.get("password")
+
+    encrypted_password = bcrypt.generate_password_hash(password)
+
+    new_record = User(username, encrypted_password)
+    db.session.add(new_record)
+    db.session.commit()
+
+    return jsonify(user_schema.dump(new_record))
+
+@app.route("/user/get", methods=["GET"])
+def get_all_users():
+    all_users = db.session.query(User).all()
+    return jsonify(multiple_user_schema.dump(all_users))
+
+@app.route("/user/get/id/<id>", methods=["GET"])
+def get_user_by_id(id):
+    user = db.session.query(User).filter(User.id == id).first()
+    return jsonify(user_schema.dump(user))
+
+@app.route("user/get/username/<username>", methods=["GET"])
+def get_user_by_username(username):
+    user = db.session.query(User).filter(User.username == username).first()
+    return jsonify(user_schema.dump(user))
 
 
 if __name__ == "__main__":
