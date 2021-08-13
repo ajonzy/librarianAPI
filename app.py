@@ -35,12 +35,12 @@ user_schema = UserSchema()
 multiple_user_schema = UserSchema(many=True)
 
 
-def generate_token() {
+def generate_token():
     token = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
     while db.session.query(User).filter(User.token == token).first() != None:
         token = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
     return token
-}
+
 
 
 @app.route("/user/add", methods=["POST"])
