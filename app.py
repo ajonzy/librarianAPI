@@ -76,6 +76,36 @@ def get_user_by_id(token):
 
     return jsonify(user_schema.dump(user))
 
+@app.route("/user/login", methods=["POST"])
+def login():
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
+
+    post_data = request.get_json()
+    username = post_data.get("username")
+    password = post_data.get("password")
+
+    user = db.session.query(User).filter(User.username == username).first()
+    if user is None:
+        return jsonify("Invalid Credentials")
+
+    if bcrypt.check_password_hash(user.password, password) == False:
+        return jsonify("Invalid Credentials")
+
+    token = generate_token()
+    user.token = token
+    db.session.commit()
+
+    return jsonify(user_schema.dump(user))
+
+@app.route("/user/logout/<token>", methods=["DELETE"])
+def logout(token):
+    user = db.session.query(User).filter(User.token == token).first()
+    user.token = None
+    db.session.commit()
+    return jsonify("Logged Out")
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
