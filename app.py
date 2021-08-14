@@ -18,7 +18,6 @@ CORS(app)
 
 
 class User(db.Model):
-    # __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
@@ -30,17 +29,15 @@ class User(db.Model):
         self.password = password
         self.token = token
 
-
 class Shelf(db.Model):
-    # __tablename__ = "shelf"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    # user = db.relationship("User", back_populates="shelves")
 
     def __init__(self, name, user_id):
         self.name = name
         self.user_id = user_id
+
 
 class ShelfSchema(ma.Schema):
     class Meta:
@@ -151,7 +148,6 @@ def add_shelf():
 def get_all_shelves():
     all_shelves = db.session.query(Shelf).all()
     return jsonify(multiple_shelf_schema.dump(all_shelves))
-
 
 
 if __name__ == "__main__":
