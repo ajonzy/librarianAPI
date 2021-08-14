@@ -23,13 +23,14 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     token = db.Column(db.String, unique=True)
 
-    def __init__(self, username, password):
+    def __init__(self, username, password, token):
         self.username = username
         self.password = password
+        self.token = token
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "token")
+        fields = ("id", "username", "password", "token")
 
 user_schema = UserSchema()
 multiple_user_schema = UserSchema(many=True)
@@ -52,7 +53,7 @@ def add_user():
     username = post_data.get("username")
     password = post_data.get("password")
 
-    encrypted_password = bcrypt.generate_password_hash(password)
+    encrypted_password = bcrypt.generate_password_hash(password).decode("utf-8")
     token = generate_token()
 
     new_record = User(username, encrypted_password, token)
