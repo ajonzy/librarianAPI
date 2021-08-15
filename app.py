@@ -23,6 +23,7 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     token = db.Column(db.String, unique=True)
     shelves = db.relationship("Shelf", backref="user", cascade='all, delete, delete-orphan')
+    series = db.relationship("Series", backref="user", cascade='all, delete, delete-orphan')
 
     def __init__(self, username, password, token):
         self.username = username
@@ -38,6 +39,22 @@ class Shelf(db.Model):
         self.name = name
         self.user_id = user_id
 
+class Series(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    def __init__(self, name, user_id):
+        self.name = name
+        self.user_id = user_id
+
+
+class SeriesSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "name", "user_id")
+
+series_schema = SeriesSchema()
+multiple_series_schema = SeriesSchema(many=True)
 
 class ShelfSchema(ma.Schema):
     class Meta:
@@ -48,8 +65,9 @@ multiple_shelf_schema = ShelfSchema(many=True)
 
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "password", "token", "shelves")
+        fields = ("id", "username", "password", "token", "shelves", "series")
     shelves = ma.Nested(multiple_shelf_schema)
+    series = ma.Nested(multiple_series_schema)
 
 user_schema = UserSchema()
 multiple_user_schema = UserSchema(many=True)
@@ -142,12 +160,33 @@ def add_shelf():
     db.session.add(new_record)
     db.session.commit()
 
-    return jsonify(sheld_schema.dump(new_record))
+    return jsonify(shelf_schema.dump(new_record))
 
 @app.route("/shelf/get", methods=["GET"])
 def get_all_shelves():
     all_shelves = db.session.query(Shelf).all()
     return jsonify(multiple_shelf_schema.dump(all_shelves))
+
+
+@app.route("/series/add", methods=["POST"])
+def add_series():
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
+
+    post_data = request.get_json()
+    name = post_data.get("name")
+    user_id = post_data.get("user_id")
+
+    new_record = Series(name, user_id)
+    db.session.add(new_record)
+    db.session.commit()
+
+    return jsonify(series_schema.dump(new_record))
+
+@app.route("/series/get", methods=["GET"])
+def get_all_series():
+    all_series = db.session.query(Series).all()
+    return jsonify(multiple_series_schema.dump(all_series))
 
 
 if __name__ == "__main__":
