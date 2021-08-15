@@ -69,7 +69,9 @@ class Book(db.Model):
     notes = db.Column(db.String)
     owned = db.Column(db.Boolean)
     series_id = db.Column(db.Integer, db.ForeignKey("series.id"))
+    series_data = db.relationship("Series", overlaps="books,series")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    shelves = db.relationship("Shelf", secondary="shelves_table", overlaps="books")
 
     def __init__(self, title, author, published_year, number_of_pages, thumbnail_url, read, rating, notes, owned, series_id, user_id):
         self.title = title
@@ -85,9 +87,25 @@ class Book(db.Model):
         self.user_id = user_id
 
 
+class SeriesShallowSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "name", "user_id")
+
+series_shallow_schema = SeriesShallowSchema()
+multiple_series_shallow_schema = SeriesShallowSchema(many=True)
+
+class ShelfShallowSchema(ma.Schema):
+    class Meta:
+        fields = ("id", "name", "user_id")
+
+shelf_shallow_schema = ShelfShallowSchema()
+multiple_shelf_shallow_schema = ShelfShallowSchema(many=True)
+
 class BookSchema(ma.Schema):
     class Meta:
-        fields = ("id", "title", "author", "published_year", "number_of_pages", "thumbnail_url", "read", "rating", "notes", "owned", "series_id")
+        fields = ("id", "title", "author", "published_year", "number_of_pages", "thumbnail_url", "read", "rating", "notes", "owned", "series_id", "series_data", "shelves")
+    series_data = ma.Nested(series_shallow_schema)
+    shelves = ma.Nested(multiple_shelf_shallow_schema)
 
 book_schema = BookSchema()
 multiple_book_schema = BookSchema(many=True)
