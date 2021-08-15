@@ -28,14 +28,16 @@ class User(db.Model):
     username = db.Column(db.String, nullable=False, unique=True)
     password = db.Column(db.String, nullable=False)
     token = db.Column(db.String, unique=True)
+    last_used_ip = db.Column(db.String)
     shelves = db.relationship("Shelf", backref="user", cascade='all, delete, delete-orphan')
     series = db.relationship("Series", backref="user", cascade='all, delete, delete-orphan')
     books = db.relationship("Book", backref="user", cascade='all, delete, delete-orphan')
 
-    def __init__(self, username, password, token):
+    def __init__(self, username, password, token,last_used_ip):
         self.username = username
         self.password = password
         self.token = token
+        self.last_used_ip = last_used_ip
 
 class Shelf(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,7 +69,7 @@ class Book(db.Model):
     read = db.Column(db.Boolean)
     rating = db.Column(db.Integer)
     notes = db.Column(db.String)
-    owned = db.Column(db.Boolean)
+    owned = db.Column(db.Boolean, nullable=False)
     series_id = db.Column(db.Integer, db.ForeignKey("series.id"))
     series_data = db.relationship("Series", overlaps="books,series")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -126,9 +128,10 @@ class ShelfSchema(ma.Schema):
 shelf_schema = ShelfSchema()
 multiple_shelf_schema = ShelfSchema(many=True)
 
+# TODO: Remove sensitive data fields
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "password", "token", "shelves", "series", "books")
+        fields = ("id", "username", "password", "token", "last_used_ip", "shelves", "series", "books")
     shelves = ma.Nested(multiple_shelf_schema)
     series = ma.Nested(multiple_series_schema)
     books = ma.Nested(multiple_book_schema)
@@ -155,8 +158,9 @@ def add_user():
 
     encrypted_password = bcrypt.generate_password_hash(password).decode("utf-8")
     token = generate_token()
+    ip = request.remote_addr
 
-    new_record = User(username, encrypted_password, token)
+    new_record = User(username, encrypted_password, token, ip)
     db.session.add(new_record)
     db.session.commit()
 
@@ -174,6 +178,15 @@ def get_all_users():
 @app.route("/user/get/<token>", methods=["GET"])
 def get_user_by_id(token):
     user = db.session.query(User).filter(User.token == token).first()
+
+    if user is None:
+        return jsonify("Invalid Credentials")
+
+    if user.last_used_ip != request.remote_addr:
+        user.token = None
+        user.last_used_ip = None
+        db.session.commit()
+        return jsonify("Invalid Credentials")
 
     new_token = generate_token()
     user.token = new_token
@@ -198,7 +211,9 @@ def login():
         return jsonify("Invalid Credentials")
 
     token = generate_token()
+    ip = request.remote_addr
     user.token = token
+    user.last_used_ip = last_used_ip
     db.session.commit()
 
     return jsonify(user_schema.dump(user))
@@ -207,6 +222,7 @@ def login():
 def logout(token):
     user = db.session.query(User).filter(User.token == token).first()
     user.token = None
+    user.last_used_ip = None
     db.session.commit()
     return jsonify("Logged Out")
 
