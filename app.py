@@ -213,7 +213,7 @@ def login():
     token = generate_token()
     ip = request.remote_addr
     user.token = token
-    user.last_used_ip = last_used_ip
+    user.last_used_ip = ip
     db.session.commit()
 
     return jsonify(user_schema.dump(user))
