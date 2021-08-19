@@ -236,6 +236,10 @@ def add_shelf():
     name = post_data.get("name")
     user_id = post_data.get("user_id")
 
+    existing_shelf_check = db.session.query(Shelf).filter(Shelf.name == name).filter(Shelf.user_id == user_id).first()
+    if existing_shelf_check is not None:
+        return jsonify("Error: Shelf already exists")
+
     new_record = Shelf(name, user_id)
     db.session.add(new_record)
     db.session.commit()
