@@ -251,6 +251,32 @@ def get_all_shelves():
     all_shelves = db.session.query(Shelf).all()
     return jsonify(multiple_shelf_schema.dump(all_shelves))
 
+@app.route("/shelf/update/<id>", methods=["PUT"])
+def update_shelf(id):
+    shelf = db.session.query(Shelf).filter(Shelf.id == id).first()
+
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
+
+    post_data = request.get_json()
+    name = post_data.get("name")
+
+    existing_shelf_check = db.session.query(Shelf).filter(Shelf.name == name).filter(Shelf.user_id == shelf.user_id).first()
+    if existing_shelf_check is not None:
+        return jsonify("Error: Shelf already exists")
+
+    shelf.name = name
+    db.session.commit()
+
+    return jsonify(shelf_schema.dump(shelf))
+
+@app.route("/shelf/delete/<id>", methods=["DELETE"])
+def delete_shelf(id):
+    shelf = db.session.query(Shelf).filter(Shelf.id == id).first()
+    db.session.delete(shelf)
+    db.session.commit()
+    return jsonify(shelf_schema.dump(shelf))
+
 
 @app.route("/series/add", methods=["POST"])
 def add_series():
