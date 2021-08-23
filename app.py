@@ -298,6 +298,32 @@ def get_all_series():
     all_series = db.session.query(Series).all()
     return jsonify(multiple_series_schema.dump(all_series))
 
+@app.route("/series/update/<id>", methods=["PUT"])
+def update_series(id):
+    series = db.session.query(Series).filter(Series.id == id).first()
+
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
+
+    post_data = request.get_json()
+    name = post_data.get("name")
+
+    existing_series_check = db.session.query(Series).filter(Series.name == name).filter(Series.user_id == series.user_id).first()
+    if existing_series_check is not None:
+        return jsonify("Error: Series already exists")
+
+    series.name = name
+    db.session.commit()
+
+    return jsonify(series_schema.dump(series))
+
+@app.route("/series/delete/<id>", methods=["DELETE"])
+def delete_series(id):
+    series = db.session.query(Series).filter(Series.id == id).first()
+    db.session.delete(series)
+    db.session.commit()
+    return jsonify(series_schema.dump(series))
+
 
 @app.route("/book/add", methods=["POST"])
 def add_book():
