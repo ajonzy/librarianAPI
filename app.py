@@ -105,7 +105,7 @@ multiple_shelf_shallow_schema = ShelfShallowSchema(many=True)
 
 class BookSchema(ma.Schema):
     class Meta:
-        fields = ("id", "title", "author", "published_year", "number_of_pages", "thumbnail_url", "read", "rating", "notes", "owned", "series_id", "series_data", "shelves")
+        fields = ("id", "title", "author", "published_year", "number_of_pages", "thumbnail_url", "read", "rating", "notes", "owned", "series_id", "series_data", "shelves", "user_id")
     series_data = ma.Nested(series_shallow_schema)
     shelves = ma.Nested(multiple_shelf_shallow_schema)
 
@@ -145,6 +145,16 @@ def generate_token():
     while db.session.query(User).filter(User.token == token).first() != None:
         token = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(16))
     return token
+
+def generate_return_data(schema):
+    if isinstance(schema, dict):
+        user = db.session.query(User).filter(User.id == schema.get("user_id")).first()
+    elif isinstance(schema, list):
+        user = db.session.query(User).filter(User.id == schema[0].get("user_id")).first()
+    return {
+        "user": user_schema.dump(user),
+        "item": schema
+    }
 
 
 @app.route("/user/add", methods=["POST"])
@@ -244,12 +254,14 @@ def add_shelf():
     db.session.add(new_record)
     db.session.commit()
 
-    return jsonify(shelf_schema.dump(new_record))
+    return_data = generate_return_data(shelf_schema.dump(new_record))
+    return jsonify(return_data)
 
 @app.route("/shelf/get", methods=["GET"])
 def get_all_shelves():
     all_shelves = db.session.query(Shelf).all()
-    return jsonify(multiple_shelf_schema.dump(all_shelves))
+    return_data = generate_return_data(multiple_shelf_schema.dump(all_shelves))
+    return jsonify(return_data)
 
 @app.route("/shelf/update/<id>", methods=["PUT"])
 def update_shelf(id):
@@ -268,14 +280,16 @@ def update_shelf(id):
     shelf.name = name
     db.session.commit()
 
-    return jsonify(shelf_schema.dump(shelf))
+    return_data = generate_return_data(shelf_schema.dump(shelf))
+    return jsonify(return_data)
 
 @app.route("/shelf/delete/<id>", methods=["DELETE"])
 def delete_shelf(id):
     shelf = db.session.query(Shelf).filter(Shelf.id == id).first()
     db.session.delete(shelf)
     db.session.commit()
-    return jsonify(shelf_schema.dump(shelf))
+    return_data = generate_return_data(shelf_schema.dump(shelf))
+    return jsonify(return_data)
 
 
 @app.route("/series/add", methods=["POST"])
@@ -291,12 +305,14 @@ def add_series():
     db.session.add(new_record)
     db.session.commit()
 
-    return jsonify(series_schema.dump(new_record))
+    return_data = generate_return_data(series_schema.dump(new_record))
+    return jsonify(return_data)
 
 @app.route("/series/get", methods=["GET"])
 def get_all_series():
     all_series = db.session.query(Series).all()
-    return jsonify(multiple_series_schema.dump(all_series))
+    return_data = generate_return_data(multiple_series_schema.dump(all_series))
+    return jsonify(return_data)
 
 @app.route("/series/update/<id>", methods=["PUT"])
 def update_series(id):
@@ -315,14 +331,16 @@ def update_series(id):
     series.name = name
     db.session.commit()
 
-    return jsonify(series_schema.dump(series))
+    return_data = generate_return_data(series_schema.dump(series))
+    return jsonify(return_data)
 
 @app.route("/series/delete/<id>", methods=["DELETE"])
 def delete_series(id):
     series = db.session.query(Series).filter(Series.id == id).first()
     db.session.delete(series)
     db.session.commit()
-    return jsonify(series_schema.dump(series))
+    return_data = generate_return_data(series_schema.dump(series))
+    return jsonify(return_data)
 
 
 @app.route("/book/add", methods=["POST"])
@@ -353,12 +371,14 @@ def add_book():
         shelf.books.append(new_record)
         db.session.commit()
 
-    return jsonify(book_schema.dump(new_record))
+    return_data = generate_return_data(book_schema.dump(new_record))
+    return jsonify(return_data)
 
 @app.route("/book/get", methods=["GET"])
 def get_all_books():
     all_books = db.session.query(Book).all()
-    return jsonify(multiple_book_schema.dump(all_books))
+    return_data = generate_return_data(multiple_book_schema.dump(all_books))
+    return jsonify(return_data)
 
 
 if __name__ == "__main__":
