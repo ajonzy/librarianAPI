@@ -407,7 +407,6 @@ def update_book(id):
     book.read = read
     book.rating = rating
     book.notes = notes
-    book.owned = owned
     book.series_id = series_id
     db.session.commit()
 
