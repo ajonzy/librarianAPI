@@ -380,6 +380,48 @@ def get_all_books():
     return_data = generate_return_data(multiple_book_schema.dump(all_books))
     return jsonify(return_data)
 
+@app.route("/book/update/<id>", methods=["PUT"])
+def update_book(id):
+    book = db.session.query(Book).filter(Book.id == id).first()
+
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
+
+    post_data = request.get_json()
+    title = post_data.get("title") 
+    author = post_data.get("author") 
+    published_year = post_data.get("published_year") 
+    number_of_pages = post_data.get("number_of_pages") 
+    thumbnail_url = post_data.get("thumbnail_url") 
+    read = post_data.get("read")
+    rating = post_data.get("rating") 
+    notes = post_data.get("notes")
+    owned = post_data.get("owned")
+    series_id = post_data.get("series_id")
+
+    book.title = title
+    book.author = author
+    book.published_year = published_year
+    book.number_of_pages = number_of_pages
+    book.thumbnail_url = thumbnail_url
+    book.read = read
+    book.rating = rating
+    book.notes = notes
+    book.owned = owned
+    book.series_id = series_id
+    db.session.commit()
+
+    return_data = generate_return_data(book_schema.dump(book))
+    return jsonify(return_data)
+
+@app.route("/book/delete/<id>", methods=["DELETE"])
+def delete_book(id):
+    book = db.session.query(Book).filter(Book.id == id).first()
+    db.session.delete(book)
+    db.session.commit()
+    return_data = generate_return_data(book_schema.dump(book))
+    return jsonify(return_data)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
