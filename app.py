@@ -398,6 +398,7 @@ def update_book(id):
     notes = post_data.get("notes")
     owned = post_data.get("owned")
     series_id = post_data.get("series_id")
+    shelves_ids = post_data.get("shelves_ids")
 
     book.title = title
     book.author = author
@@ -409,6 +410,16 @@ def update_book(id):
     book.notes = notes
     book.series_id = series_id
     db.session.commit()
+
+    for nestedShelf in book.shelves:
+        shelf = db.session.query(Shelf).filter(Shelf.id == nestedShelf.id).first()
+        shelf.books = list(filter(lambda nestedBook: nestedBook.id != book.id, shelf.books))
+        db.session.commit()
+
+    for shelf_id in shelves_ids:
+        shelf = db.session.query(Shelf).filter(Shelf.id == shelf_id).first()
+        shelf.books.append(book)
+        db.session.commit()
 
     return_data = generate_return_data(book_schema.dump(book))
     return jsonify(return_data)
