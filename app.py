@@ -73,9 +73,9 @@ class Book(db.Model):
     notes = db.Column(db.String)
     owned = db.Column(db.Boolean, nullable=False)
     series_id = db.Column(db.Integer, db.ForeignKey("series.id"))
-    series_data = db.relationship("Series", overlaps="books,series")
+    series_data = db.relationship("Series", lazy="subquery", overlaps="books,series")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    shelves = db.relationship("Shelf", secondary="shelves_table", overlaps="books")
+    shelves = db.relationship("Shelf", secondary="shelves_table", lazy="subquery", overlaps="books")
 
     def __init__(self, title, author, published_year, number_of_pages, thumbnail_url, read, rating, notes, owned, series_id, user_id):
         self.title = title
