@@ -14,6 +14,7 @@ flask-cors = "*"
 flask-bcrypt = "*"
 gunicorn = "*"
 psycopg2 = "*"
+werkzeug = "*"
 
 [requires]
 python_version = "3.7"

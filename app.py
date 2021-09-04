@@ -3,12 +3,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import random
 import string
 
 app = Flask(__name__)
 app.config[ "SQLALCHEMY_DATABASE_URI"] = "postgresql://utskvbidctbsrq:f590bf9df07389224eba2d12e89d7464e6c595eecc2482c4821132d39d3b40ec@ec2-34-204-128-77.compute-1.amazonaws.com:5432/dae2joimg0snjm"
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
