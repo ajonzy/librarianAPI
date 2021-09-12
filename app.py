@@ -31,19 +31,22 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     token = db.Column(db.String, unique=True)
     last_used_ip = db.Column(db.String)
+    shelves_display = db.Column(db.String, nullable=False)
     shelves = db.relationship("Shelf", backref="user", cascade='all, delete, delete-orphan')
     series = db.relationship("Series", backref="user", cascade='all, delete, delete-orphan')
     books = db.relationship("Book", backref="user", cascade='all, delete, delete-orphan')
 
-    def __init__(self, username, password, token,last_used_ip):
+    def __init__(self, username, password, token, last_used_ip):
         self.username = username
         self.password = password
         self.token = token
         self.last_used_ip = last_used_ip
+        self.shelves_display = "most-books"
 
 class Shelf(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    position = db.Column(db.Integer)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     books = db.relationship("Book", secondary="shelves_table")
 
@@ -73,11 +76,12 @@ class Book(db.Model):
     notes = db.Column(db.String)
     owned = db.Column(db.Boolean, nullable=False)
     series_id = db.Column(db.Integer, db.ForeignKey("series.id"))
+    series_position = db.Column(db.Integer)
     series_data = db.relationship("Series", lazy="subquery", overlaps="books,series")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     shelves = db.relationship("Shelf", secondary="shelves_table", lazy="subquery", overlaps="books")
 
-    def __init__(self, title, author, published_year, number_of_pages, thumbnail_url, read, rating, notes, owned, series_id, user_id):
+    def __init__(self, title, author, published_year, number_of_pages, thumbnail_url, read, rating, notes, owned, series_id, series_position, user_id):
         self.title = title
         self.author = author
         self.published_year = published_year
@@ -88,6 +92,7 @@ class Book(db.Model):
         self.notes = notes
         self.owned = owned
         self.series_id = series_id
+        self.series_position = series_position
         self.user_id = user_id
 
 
@@ -100,14 +105,14 @@ multiple_series_shallow_schema = SeriesShallowSchema(many=True)
 
 class ShelfShallowSchema(ma.Schema):
     class Meta:
-        fields = ("id", "name", "user_id")
+        fields = ("id", "name", "position", "user_id")
 
 shelf_shallow_schema = ShelfShallowSchema()
 multiple_shelf_shallow_schema = ShelfShallowSchema(many=True)
 
 class BookSchema(ma.Schema):
     class Meta:
-        fields = ("id", "title", "author", "published_year", "number_of_pages", "thumbnail_url", "read", "rating", "notes", "owned", "series_id", "series_data", "shelves", "user_id")
+        fields = ("id", "title", "author", "published_year", "number_of_pages", "thumbnail_url", "read", "rating", "notes", "owned", "series_position", "series_number", "series_id", "series_data", "shelves", "user_id")
     series_data = ma.Nested(series_shallow_schema)
     shelves = ma.Nested(multiple_shelf_shallow_schema)
 
@@ -124,7 +129,7 @@ multiple_series_schema = SeriesSchema(many=True)
 
 class ShelfSchema(ma.Schema):
     class Meta:
-        fields = ("id", "name", "user_id", "books")
+        fields = ("id", "name", "position", "user_id", "books")
     books = ma.Nested(multiple_book_schema)
 
 shelf_schema = ShelfSchema()
@@ -133,7 +138,7 @@ multiple_shelf_schema = ShelfSchema(many=True)
 # TODO: Remove sensitive data fields
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "password", "token", "last_used_ip", "shelves", "series", "books")
+        fields = ("id", "username", "password", "token", "last_used_ip", "shelves_display", "shelves", "series", "books")
     shelves = ma.Nested(multiple_shelf_schema)
     series = ma.Nested(multiple_series_schema)
     books = ma.Nested(multiple_book_schema)
@@ -274,12 +279,14 @@ def update_shelf(id):
 
     post_data = request.get_json()
     name = post_data.get("name")
+    position = post_data.get("position")
 
     existing_shelf_check = db.session.query(Shelf).filter(Shelf.name == name).filter(Shelf.user_id == shelf.user_id).first()
     if existing_shelf_check is not None:
         return jsonify("Error: Shelf already exists")
 
     shelf.name = name
+    shelf.position = position
     db.session.commit()
 
     return_data = generate_return_data(shelf_schema.dump(shelf))
@@ -361,10 +368,11 @@ def add_book():
     notes = post_data.get("notes")
     owned = post_data.get("owned")
     series_id = post_data.get("series_id")
+    series_position = post_data.get("series_position")
     shelves_ids = post_data.get("shelves_ids")
     user_id = post_data.get("user_id")
 
-    new_record = Book(title, author, published_year, number_of_pages, thumbnail_url, read, rating, notes, owned, series_id, user_id)
+    new_record = Book(title, author, published_year, number_of_pages, thumbnail_url, read, rating, notes, owned, series_id, series_position, user_id)
     db.session.add(new_record)
     db.session.commit()
 
@@ -400,6 +408,7 @@ def update_book(id):
     notes = post_data.get("notes")
     owned = post_data.get("owned")
     series_id = post_data.get("series_id")
+    series_position = post_data.get("series_position")
     shelves_ids = post_data.get("shelves_ids")
 
     book.title = title
