@@ -249,8 +249,7 @@ def update_user_shelves_display(id):
     user.shelves_display = shelves_display
     db.session.commit()
 
-    return_data = generate_return_data(user_schema.dump(user))
-    return jsonify(return_data)
+    return jsonify(user_schema.dump(user))
 
 @app.route("/user/logout/<token>", methods=["DELETE"])
 def logout(token):
