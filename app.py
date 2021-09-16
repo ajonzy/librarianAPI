@@ -236,6 +236,22 @@ def login():
 
     return jsonify(user_schema.dump(user))
 
+@app.route("/user/update/shelves_display/<id>", methods=["PUT"])
+def update_user_shelves_display(id):
+    user = db.session.query(User).filter(User.id == id).first()
+
+    if request.content_type != "application/json":
+        return jsonify("Error: Data must be sent as JSON")
+
+    post_data = request.get_json()
+    shelves_display = post_data.get("shelves_display")
+
+    user.shelves_display = shelves_display
+    db.session.commit()
+
+    return_data = generate_return_data(user_schema.dump(user))
+    return jsonify(return_data)
+
 @app.route("/user/logout/<token>", methods=["DELETE"])
 def logout(token):
     user = db.session.query(User).filter(User.token == token).first()
