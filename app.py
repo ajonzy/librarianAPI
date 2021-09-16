@@ -50,8 +50,9 @@ class Shelf(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     books = db.relationship("Book", secondary="shelves_table")
 
-    def __init__(self, name, user_id):
+    def __init__(self, name, position, user_id):
         self.name = name
+        self.position = position
         self.user_id = user_id
 
 class Series(db.Model):
@@ -181,7 +182,7 @@ def add_user():
     db.session.add(new_record)
     db.session.commit()
 
-    new_shelf = Shelf("All Books", new_record.id)
+    new_shelf = Shelf("All Books", 0, new_record.id)
     db.session.add(new_shelf) 
     db.session.commit()
 
@@ -251,13 +252,14 @@ def add_shelf():
 
     post_data = request.get_json()
     name = post_data.get("name")
+    position = post_data.get("position")
     user_id = post_data.get("user_id")
 
     existing_shelf_check = db.session.query(Shelf).filter(Shelf.name == name).filter(Shelf.user_id == user_id).first()
     if existing_shelf_check is not None:
         return jsonify("Error: Shelf already exists")
 
-    new_record = Shelf(name, user_id)
+    new_record = Shelf(name, position, user_id)
     db.session.add(new_record)
     db.session.commit()
 
