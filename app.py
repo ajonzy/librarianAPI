@@ -298,9 +298,16 @@ def update_shelf(id):
     name = post_data.get("name")
     position = post_data.get("position")
 
-    existing_shelf_check = db.session.query(Shelf).filter(Shelf.name == name).filter(Shelf.user_id == shelf.user_id).first()
-    if existing_shelf_check is not None:
-        return jsonify("Error: Shelf already exists")
+    if shelf.name != name:
+        existing_shelf_check = db.session.query(Shelf).filter(Shelf.name == name).filter(Shelf.user_id == shelf.user_id).first()
+        if existing_shelf_check is not None:
+            return jsonify("Error: Shelf already exists")
+
+    if shelf.position != position:
+        moved_shelves = db.session.query(Shelf).filter(Shelf.position <= position if shelf.position < position else Shelf.position >= position).filter(Shelf.position > shelf.position if shelf.position < position else Shelf.position < shelf.position).all()
+        for moved_shelf in moved_shelves:
+            moved_shelf.position = moved_shelf.position - 1 if shelf.position < position else moved_shelf.position + 1
+            db.session.commit()
 
     shelf.name = name
     shelf.position = position
