@@ -319,6 +319,12 @@ def update_shelf(id):
 @app.route("/shelf/delete/<id>", methods=["DELETE"])
 def delete_shelf(id):
     shelf = db.session.query(Shelf).filter(Shelf.id == id).first()
+
+    moved_shelves = db.session.query(Shelf).filter(Shelf.position > shelf.position).all()
+    for moved_shelf in moved_shelves:
+        moved_shelf.position -= 1
+        db.session.commit()
+
     db.session.delete(shelf)
     db.session.commit()
     return_data = generate_return_data(shelf_schema.dump(shelf))
