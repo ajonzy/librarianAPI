@@ -362,13 +362,20 @@ def update_series(id):
 
     post_data = request.get_json()
     name = post_data.get("name")
+    book_positions = post_data.get("book_positions")
 
-    existing_series_check = db.session.query(Series).filter(Series.name == name).filter(Series.user_id == series.user_id).first()
-    if existing_series_check is not None:
-        return jsonify("Error: Series already exists")
+    if series.name != name:
+        existing_series_check = db.session.query(Series).filter(Series.name == name).filter(Series.user_id == series.user_id).first()
+        if existing_series_check is not None:
+            return jsonify("Error: Series already exists")
 
     series.name = name
     db.session.commit()
+
+    for book_position in book_positions:
+        book = db.session.query(Book).filter(Book.id == book_position.get("id")).first()
+        book.series_position = book_position.get("position")
+        db.session.commit()
 
     return_data = generate_return_data(series_schema.dump(series))
     return jsonify(return_data)
