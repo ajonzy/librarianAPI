@@ -457,6 +457,7 @@ def update_book(id):
     book.rating = rating
     book.notes = notes
     book.series_id = series_id
+    book.series_position = series_position
     db.session.commit()
 
     for nestedShelf in book.shelves:
