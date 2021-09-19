@@ -303,7 +303,7 @@ def update_shelf(id):
         if existing_shelf_check is not None:
             return jsonify("Error: Shelf already exists")
 
-    if shelf.position != position:
+    if shelf.position != position and position is not None:
         moved_shelves = db.session.query(Shelf).filter(Shelf.position <= position if shelf.position < position else Shelf.position >= position).filter(Shelf.position > shelf.position if shelf.position < position else Shelf.position < shelf.position).all()
         for moved_shelf in moved_shelves:
             moved_shelf.position = moved_shelf.position - 1 if shelf.position < position else moved_shelf.position + 1
