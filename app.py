@@ -68,7 +68,7 @@ class Series(db.Model):
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String, nullable=False)
-    author = db.Column(db.String, nullable=False)
+    author = db.Column(db.String)
     published_year = db.Column(db.String)
     number_of_pages = db.Column(db.Integer)
     thumbnail_url = db.Column(db.String)
