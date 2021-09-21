@@ -174,6 +174,10 @@ def add_user():
     username = post_data.get("username")
     password = post_data.get("password")
 
+    existing_user_check = db.session.query(User).filter(User.username == username).first()
+    if existing_user_check is not None:
+        return jsonify("Error: User already exists")
+
     encrypted_password = bcrypt.generate_password_hash(password).decode("utf-8")
     token = generate_token()
     ip = request.remote_addr
