@@ -4,12 +4,18 @@ from flask_marshmallow import Marshmallow
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
+from dotenv import load_dotenv
 
 import random
 import string
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
-app.config[ "SQLALCHEMY_DATABASE_URI"] = "postgresql://utskvbidctbsrq:f590bf9df07389224eba2d12e89d7464e6c595eecc2482c4821132d39d3b40ec@ec2-34-204-128-77.compute-1.amazonaws.com:5432/dae2joimg0snjm"
+
+database_uri = "postgresql:" + ":".join(os.environ.get("DATABASE_URL", "").split(":")[1:])
+app.config[ "SQLALCHEMY_DATABASE_URI"] = database_uri
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 db = SQLAlchemy(app)
@@ -32,6 +38,7 @@ class User(db.Model):
     token = db.Column(db.String, unique=True)
     last_used_ip = db.Column(db.String)
     shelves_display = db.Column(db.String, nullable=False)
+    email = db.Column(db.String)
     shelves = db.relationship("Shelf", backref="user", cascade='all, delete, delete-orphan')
     series = db.relationship("Series", backref="user", cascade='all, delete, delete-orphan')
     books = db.relationship("Book", backref="user", cascade='all, delete, delete-orphan')
@@ -136,10 +143,9 @@ class ShelfSchema(ma.Schema):
 shelf_schema = ShelfSchema()
 multiple_shelf_schema = ShelfSchema(many=True)
 
-# TODO: Remove sensitive data fields
 class UserSchema(ma.Schema):
     class Meta:
-        fields = ("id", "username", "password", "token", "last_used_ip", "shelves_display", "shelves", "series", "books")
+        fields = ("id", "username", "token", "shelves_display", "shelves", "series", "books")
     shelves = ma.Nested(multiple_shelf_schema)
     series = ma.Nested(multiple_series_schema)
     books = ma.Nested(multiple_book_schema)

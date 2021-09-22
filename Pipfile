@@ -13,6 +13,7 @@ flask-bcrypt = "*"
 gunicorn = "*"
 psycopg2 = "*"
 werkzeug = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
