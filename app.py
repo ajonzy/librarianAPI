@@ -464,6 +464,7 @@ def update_book(id):
     book.number_of_pages = number_of_pages
     book.thumbnail_url = thumbnail_url
     book.read = read
+    book.owned = owned
     book.rating = rating
     book.notes = notes
     book.series_id = series_id
