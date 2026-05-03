@@ -22,6 +22,9 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
 
+with app.app_context():
+    db.create_all()
+
 CORS(app)
 
 
