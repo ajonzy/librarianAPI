@@ -22,9 +22,6 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
 
-with app.app_context():
-    db.create_all()
-
 CORS(app)
 
 
@@ -494,6 +491,10 @@ def delete_book(id):
     db.session.commit()
     return_data = generate_return_data(book_schema.dump(book))
     return jsonify(return_data)
+
+
+with app.app_context():
+    db.create_all()
 
 
 if __name__ == "__main__":
